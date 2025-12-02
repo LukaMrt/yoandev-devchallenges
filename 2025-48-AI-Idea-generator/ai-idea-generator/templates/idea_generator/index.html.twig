@@ -1,0 +1,207 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Générateur d'idées IA{% endblock %}
+
+{% block style %}
+<style>
+    html {
+        min-height: 100%;
+    }
+    body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) fixed;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2em;
+        box-sizing: border-box;
+    }
+    .main-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    h1 {
+        color: white;
+        text-align: center;
+        font-size: 2.5em;
+        margin-bottom: 1em;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2em;
+        align-items: start;
+    }
+    .form-column,
+    .ideas-column {
+        background: white;
+        padding: 2.5em;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .column-title {
+        color: #333;
+        margin-top: 0;
+        font-size: 1.5em;
+        margin-bottom: 1em;
+    }
+    .form-group {
+        margin-bottom: 1.5em;
+    }
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5em;
+        color: #555;
+    }
+    input[type="number"],
+    textarea,
+    select,
+    input[type="text"] {
+        width: 100%;
+        padding: 0.75em;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1em;
+        font-family: inherit;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+        background: #fafaff;
+        appearance: none;
+    }
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+        outline: none;
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    select {
+        cursor: pointer;
+        background-image: url('data:image/svg+xml;utf8,<svg fill="%23667eea" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 0.75em center;
+        background-size: 1.2em;
+    }
+    textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+    button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1em 2em;
+        font-size: 1.1em;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+        transform: translateY(0);
+    }
+    .ideas-column {
+        display: flex;
+        flex-direction: column;
+    }
+    .ideas-list {
+        flex: 1;
+    }
+    .empty-state {
+        color: #999;
+        text-align: center;
+        padding: 3em 1em;
+        font-style: italic;
+    }
+    .idea-item {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        padding: 1em;
+        margin-bottom: 1em;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+    .idea-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 1.3em;
+    }
+    .idea-price {
+        font-weight: 600;
+        margin-top: 0.5em;
+    }
+    .idea-price-value {
+        color: #764ba2;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="main-container">
+    <h1>🎯 Générateur d'idées</h1>
+    
+    <div class="content-wrapper">
+        <div class="form-column">
+            <form method="post" action="{{ path('app_idea_generator') }}">
+                <h2 class="column-title">⚙️ Paramètres</h2>
+                <div class="form-group">
+                    <label for="model">Modèle IA</label>
+                    <select id="model" name="model" required>
+                        <option value="" disabled {% if ideaRequest is not defined or ideaRequest is null or ideaRequest.model is not defined or ideaRequest.model == '' %}selected{% endif %}>Sélectionnez un modèle</option>
+                        <option value="gemini-2.5-flash-lite" {% if ideaRequest is defined and ideaRequest is not null and ideaRequest.model is defined and ideaRequest.model == 'gemini-2.5-flash-lite' %}selected{% endif %}>Gemini 2.5 Flash lite</option>
+                        <option value="gemini-2.5-flash" {% if ideaRequest is defined and ideaRequest is not null and ideaRequest.model is defined and ideaRequest.model == 'gemini-2.5-flash' %}selected{% endif %}>Gemini 2.5 Flash</option>
+                        <option value="gpt-3.5-turbo" {% if ideaRequest is defined and ideaRequest is not null and ideaRequest.model is defined and ideaRequest.model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo (OpenAI)</option>
+                        <option value="mistral-tiny" {% if ideaRequest is defined and ideaRequest is not null and ideaRequest.model is defined and ideaRequest.model == 'mistral-tiny' %}selected{% endif %}>Mistral Tiny</option>
+                        <option value="claude-3-haiku-20240307" {% if ideaRequest is defined and ideaRequest is not null and ideaRequest.model is defined and ideaRequest.model == 'claude-3-haiku-20240307' %}selected{% endif %}>Claude 3 Haiku</option>
+                        <option value="gemini-1.5-flash" {% if ideaRequest is defined and ideaRequest is not null and ideaRequest.model is defined and ideaRequest.model == 'gemini-1.5-flash' %}selected{% endif %}>Gemini 1.5 Flash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="api-key">Clé API</label>
+                    <input type="text" id="api-key" name="api-key" required autocomplete="off" value="{{ ideaRequest is defined and ideaRequest is not null ? attribute(ideaRequest, 'apiKey') : '' }}">
+                </div>
+                <h2 class="column-title">📝 Vos préférences</h2>
+                <div class="form-group">
+                    <label for="age">Âge</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required value="{{ ideaRequest is defined and ideaRequest is not null ? attribute(ideaRequest, 'age') : '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="interests">Centres d'intérêts</label>
+                    <textarea id="interests" name="interests" placeholder="Ex: technologie, sport, cuisine..." required>{{ ideaRequest is defined and ideaRequest is not null ? attribute(ideaRequest, 'interests') : '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="count">Nombre d'idées</label>
+                    <input type="number" id="count" name="count" min="1" max="10" value="{{ ideaRequest is defined and ideaRequest is not null ? attribute(ideaRequest, 'count') : 5 }}" required>
+                </div>
+
+                <button type="submit">Générer des idées ✨</button>
+            </form>
+        </div>
+
+        <div class="ideas-column">
+            <h2 class="column-title">💡 Idées générées</h2>
+            {% if ideas is not null %}
+                <div class="ideas-list">
+                    {% for idea in ideas %}
+                        <div class="idea-item">
+                            <div class="idea-name">{{ idea.name }}</div>
+                            <div class="idea-price">Environ <span class="idea-price-value">{{ idea.price }}€</span></div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    Remplissez le formulaire et cliquez sur "Générer des idées" pour voir les résultats ici.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
