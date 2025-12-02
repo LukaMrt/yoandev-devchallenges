@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+
+# Docker
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# Dependencies (will be installed in container)
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Cache and logs (generated in container)
+var/*
+!var/.gitkeep
+
+# Documentation
+README.md

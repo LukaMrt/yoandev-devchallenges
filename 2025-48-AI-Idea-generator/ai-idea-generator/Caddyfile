@@ -1,0 +1,22 @@
+{
+	auto_https off
+	admin off
+
+	frankenphp {
+		worker {
+			file public/index.php
+			num 1
+		}
+	}
+}
+
+http://:80 {
+	root * /app/public
+	php_server
+	file_server
+
+	log {
+		output stdout
+		format json
+	}
+}
