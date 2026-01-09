@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capsule Temporelle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f5f5f0;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+        }
+        .subtitle {
+            margin-bottom: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #000;
+            background: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            background: #fffbf0;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #000;
+            color: #fff;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: #333;
+        }
+        button:active {
+            background: #555;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            display: none;
+            border: 2px solid #000;
+        }
+        .success {
+            background: #fff;
+            border-color: #000;
+        }
+        .error {
+            background: #fff;
+            border-color: #000;
+        }
+        .read-link {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-left: 3px solid #000;
+        }
+        .read-link a {
+            color: #000;
+            font-weight: bold;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+        .capsules-list {
+            margin-top: 60px;
+        }
+        .capsules-list h2 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+        }
+        .capsule-item {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .capsule-item.unlocked {
+            border-left-width: 8px;
+        }
+        .capsule-item.locked {
+            background: #f9f9f9;
+        }
+        .capsule-status {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .capsule-status.unlocked::before {
+            content: "✓ ";
+        }
+        .capsule-status.locked::before {
+            content: "⊗ ";
+        }
+        .capsule-message {
+            margin: 10px 0;
+            font-size: 14px;
+            padding: 10px;
+            background: #fafafa;
+            border-left: 3px solid #ccc;
+        }
+        .capsule-item.unlocked .capsule-message {
+            border-left-color: #000;
+        }
+        .capsule-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .capsule-link {
+            margin-top: 10px;
+        }
+        .capsule-link a {
+            color: #000;
+            text-decoration: underline;
+            font-size: 12px;
+        }
+        .no-capsules {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+            border: 2px dashed #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Capsule Temporelle</h1>
+        <p class="subtitle">
+            Messages verrouillés dans le temps. Déverrouillables uniquement après la date spécifiée.
+        </p>
+
+        <form id="capsuleForm">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Votre message..." required></textarea>
+
+            <label for="unlock_date">Date de déverrouillage</label>
+            <input type="date" id="unlock_date" name="unlock_date" required>
+
+            <button type="submit">Créer capsule</button>
+        </form>
+
+        <div id="result"></div>
+
+        <!-- Liste des capsules existantes -->
+        <div class="capsules-list">
+            <h2>Capsules</h2>
+
+            {% if capsules %}
+                {% for capsule in capsules %}
+                <div class="capsule-item {% if capsule.is_unlocked %}unlocked{% else %}locked{% endif %}">
+                    <div class="capsule-status {% if capsule.is_unlocked %}unlocked{% else %}locked{% endif %}">
+                        {% if capsule.is_unlocked %}
+                            Déverrouillée
+                        {% else %}
+                            Verrouillée ({{ capsule.days_remaining }}j {{ capsule.hours_remaining }}h restant{{ capsule.hours_remaining|pluralize }})
+                        {% endif %}
+                    </div>
+
+                    <div class="capsule-message">
+                        {{ capsule.message }}
+                    </div>
+
+                    <div class="capsule-meta">
+                        Déverrouillage: {{ capsule.unlock_date|date:"d/m/Y à H:i" }}
+                    </div>
+
+                    <div class="capsule-link">
+                        <a href="/capsule/read/{{ capsule.id }}/" target="_blank">
+                            → Lire /capsule/read/{{ capsule.id }}/
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-capsules">
+                    Aucune capsule créée pour le moment. Créez-en une ci-dessus !
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('capsuleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const resultDiv = document.getElementById('result');
+
+            try {
+                const response = await fetch('/capsule/save/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Créer les éléments de façon sécurisée
+                    resultDiv.className = 'success';
+                    resultDiv.style.display = 'block';
+                    resultDiv.textContent = '';
+
+                    const title = document.createElement('strong');
+                    title.textContent = 'Capsule créée';
+                    resultDiv.appendChild(title);
+
+                    const linkDiv = document.createElement('div');
+                    linkDiv.className = 'read-link';
+
+                    const description = document.createElement('p');
+                    description.textContent = `Accessible le ${data.unlock_date}`;
+                    linkDiv.appendChild(description);
+
+                    const link = document.createElement('a');
+                    link.href = `/capsule/read/${data.message_id}/`;
+                    link.target = '_blank';
+                    link.textContent = `/capsule/read/${data.message_id}/`;
+                    linkDiv.appendChild(link);
+
+                    resultDiv.appendChild(linkDiv);
+                    e.target.reset();
+
+                    // Recharger la page après 2 secondes pour afficher la nouvelle capsule
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Erreur inconnue');
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.style.display = 'block';
+                resultDiv.textContent = '';
+
+                const title = document.createElement('strong');
+                title.textContent = 'Erreur: ';
+                resultDiv.appendChild(title);
+
+                const errorMsg = document.createTextNode(error.message);
+                resultDiv.appendChild(errorMsg);
+            }
+        });
+
+        // Définir la date minimale à aujourd'hui
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('unlock_date').setAttribute('min', today);
+    </script>
+</body>
+</html>
